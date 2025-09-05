@@ -1,0 +1,84 @@
+# Trinity-RFT CHORD简化配置 - 适合初学者
+# 使用默认参数的CHORD混合训练配置
+
+project: "Trinity-RFT-Qwen3-CHORD-Simple"
+name: "qwen3-4b-chord-simple"
+
+# 基础配置
+model:
+  model_path: "cache/models/modelscope/hub/models/qwen/Qwen3-4B"
+  max_response_tokens: 1024  # 简化：较短的响应长度
+  max_model_len: 2048        # 简化：较短的模型长度
+
+# CHORD算法 - 使用推荐默认参数
+algorithm:
+  algorithm_type: mix_chord
+  repeat_times: 4  # 简化：减少重复次数
+  sample_strategy_args:
+    expert_data_ratio: 0.3  # 简化：增加专家数据比例，更稳定
+
+# 硬件配置
+cluster:
+  node_num: 1
+  gpu_per_node: 4  # 简化：假设使用4块GPU
+
+# 简化的数据配置
+buffer:
+  total_epochs: 2  # 简化：较少的训练轮数
+  batch_size: 8    # 简化：较小的批次
+  train_batch_size: 64
+  
+  explorer_input:
+    taskset:
+      name: simple_rl_data
+      storage_type: file
+      path: "sft_data"
+      format:
+        prompt_key: 'prompt'
+        response_key: 'response'
+      rollout_args:
+        temperature: 0.8  # 简化：中等温度
+  
+  trainer_input:
+    experience_buffer:
+      name: simple_chord_buffer
+      storage_type: queue
+      path: 'sqlite:///simple_chord.db'
+    
+    sft_warmup_dataset:
+      total_epochs: 10
+      name: simple_sft_data
+      storage_type: file
+      path: 'sft_data'
+      format:
+        prompt_type: plaintext
+        prompt_key: 'prompt'
+        response_key: 'response'
+
+# 简化的Explorer配置
+explorer:
+  eval_interval: 10
+  runner_num: 8
+  rollout_model:
+    engine_type: vllm_async
+    engine_num: 2
+    tensor_parallel_size: 1  # 简化：单GPU推理
+    dtype: bfloat16
+    seed: 42
+
+# 简化的同步配置
+synchronizer:
+  sync_method: 'nccl'
+  sync_interval: 2  # 简化：每2步同步一次
+
+# 训练器配置
+trainer:
+  trainer_type: 'verl'
+  trainer_config_path: 'qwen3_chord_simple_train.yaml'
+  save_interval: 20
+
+checkpoint_root_dir: "./checkpoints/qwen3_chord_simple/"
+
+# 简化：不使用复杂监控
+# monitor:
+#   monitor_type: wandb

@@ -1,0 +1,154 @@
+# Trinity-RFT CHORD混合训练配置 - Qwen3-4B
+# CHORD: 动态整合SFT和强化学习的混合训练算法
+
+project: "Trinity-RFT-Qwen3-CHORD"
+name: "qwen3-4b-chord-mixed-training"
+
+# 模型配置
+model:
+  model_path: "cache/models/modelscope/hub/models/qwen/Qwen3-4B"
+  max_response_tokens: 2048
+  max_model_len: 4096
+
+# CHORD算法配置
+algorithm:
+  algorithm_type: mix_chord
+  repeat_times: 8  # 每个RL任务重复采样8次
+  
+  # KL散度损失配置
+  kl_loss_fn_args:
+    kl_coef: 0.0  # KL系数，CHORD通常设为0
+  
+  # 采样策略配置
+  sample_strategy_args:
+    expert_data_ratio: 0.25  # 专家数据占比25%（可根据数据量调整）
+  
+  # CHORD核心参数配置
+  policy_loss_fn_args:
+    # μ参数调度配置（控制SFT和RL损失的动态权重）
+    mu_warmup_steps: 100     # μ热身步数，适合4B模型
+    mu_decay_steps: 300      # μ衰减步数  
+    mu_peak: 0.6            # μ峰值，SFT权重最高点
+    mu_valley: 0.05         # μ最低值，后期以RL为主
+    
+    # CHORD变体选择
+    enable_phi_function: true  # 启用φ函数（CHORD-φ变体，推荐）
+    
+    # 训练超参数
+    clip_range: 0.2
+    use_token_level_loss_in_sft: true
+    use_dynamic_bsz: true
+    
+    # 批次配置（根据GPU数量调整）
+    ppo_mini_batch_size: 192  # 总mini batch大小
+    ppo_micro_batch_size_per_gpu: 3  # 每GPU微批次大小
+    ngpus_trainer: 4  # 训练GPU数量
+    
+    # 不同数据类型的批次大小
+    train_batch_size_expert: 48   # 专家数据批次大小
+    train_batch_size_usual: 144   # RL数据批次大小 (18 * 8 repeat_times)
+
+# 集群配置
+cluster:
+  node_num: 1
+  gpu_per_node: 8
+
+# 数据和缓冲区配置
+buffer:
+  total_epochs: 3  # 训练轮数
+  batch_size: 18   # 任务批次大小
+  train_batch_size: 192  # 总训练批次大小
+  
+  # Explorer输入配置（强化学习数据）
+  explorer_input:
+    taskset:
+      name: rl_custom_data
+      storage_type: file
+      path: "sft_data"  # 你的数据路径
+      split: 'train'
+      format:
+        prompt_key: 'prompt'      # 问题字段名
+        response_key: 'response'  # 答案字段名
+      rollout_args:
+        temperature: 1.0  # RL生成的温度参数
+        top_p: 0.9
+        logprobs: 0
+    
+    # 评估数据集配置
+    eval_tasksets:
+      - name: eval_data
+        storage_type: file
+        path: "sft_data"  # 评估数据路径
+        split: 'test'     # 如果有测试集
+        format:
+          prompt_key: 'prompt'
+          response_key: 'response'
+        rollout_args:
+          temperature: 0.1  # 评估时使用较低温度
+          top_p: 0.95
+    
+    # 工作流配置
+    default_workflow_type: 'eval_workflow'  # 通用评估工作流
+    # default_reward_fn_type: 'accuracy_reward'  # 可根据任务类型调整奖励函数
+  
+  # Trainer输入配置  
+  trainer_input:
+    experience_buffer:
+      name: chord_buffer
+      storage_type: queue
+      path: 'sqlite:///qwen3_chord.db'
+    
+    # SFT热身数据集（专家数据）
+    sft_warmup_dataset:
+      total_epochs: 20  # SFT数据训练轮数
+      name: sft_expert_data
+      storage_type: file
+      path: 'sft_data'  # 专家数据路径
+      split: 'train'
+      format:
+        # 根据数据格式选择配置方式
+        
+        # 方式1: 简单问答格式
+        prompt_type: plaintext
+        prompt_key: 'prompt'
+        response_key: 'response'
+        
+        # 方式2: 对话格式（如果数据是messages格式，启用下面配置）
+        # prompt_type: messages  
+        # messages_key: 'messages'
+
+# Explorer配置
+explorer:
+  eval_interval: 20  # 每20步评估一次
+  runner_num: 12     # 并发任务数
+  rollout_model:
+    engine_type: vllm_async
+    engine_num: 3              # 推理引擎数量
+    tensor_parallel_size: 2    # 张量并行大小
+    enable_prefix_caching: false
+    enforce_eager: true
+    dtype: bfloat16
+    seed: 42
+
+# 同步配置
+synchronizer:
+  sync_method: 'nccl'   # 使用NCCL同步
+  sync_interval: 1      # 每步同步
+  sync_timeout: 1200
+
+# 训练器配置
+trainer:
+  trainer_type: 'verl'
+  trainer_config_path: 'qwen3_chord_train_config.yaml'
+  save_interval: 50  # 每50步保存检查点
+
+# 检查点保存目录
+checkpoint_root_dir: "./checkpoints/qwen3_chord/"
+
+# 监控配置
+monitor:
+  monitor_type: wandb
+  # project: "qwen3-chord-training"
+
+# 可选：设置日志级别
+# log_level: INFO

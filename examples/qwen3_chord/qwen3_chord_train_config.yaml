@@ -1,0 +1,54 @@
+# Trinity-RFT CHORD训练详细配置
+# 基于VERL引擎的CHORD混合训练参数配置
+
+actor_rollout_ref:
+  hybrid_engine: True
+  model:
+    external_lib: null
+    override_config: {}
+    enable_gradient_checkpointing: True  # 启用梯度检查点节省显存
+    use_remove_padding: True
+  
+  actor:
+    strategy: fsdp  # 使用FSDP分布式训练策略
+    ppo_micro_batch_size_per_gpu: 3  # 每GPU微批次大小，根据显存调整
+    use_dynamic_bsz: True            # 启用动态批次大小
+    ppo_max_token_len_per_gpu: 10000 # 每GPU最大token长度
+    grad_clip: 1.0                   # 梯度裁剪
+    ppo_epochs: 1                    # PPO训练epoch数
+    shuffle: False                   # CHORD不建议打乱数据
+    ulysses_sequence_parallel_size: 2 # 序列并行大小
+    
+    # CHORD优化器配置
+    optim:
+      lr: 2e-6  # CHORD推荐使用较小的学习率，适合4B模型
+      lr_warmup_steps_ratio: 0.1  # 学习率热身比例
+      warmup_style: linear         # 线性热身策略
+      total_training_steps: -1     # 自动计算总步数
+    
+    # FSDP配置
+    fsdp_config:
+      wrap_policy:
+        min_num_params: 0
+      param_offload: False      # 是否offload参数到CPU
+      optimizer_offload: False  # 是否offload优化器状态  
+      fsdp_size: -1            # 自动确定FSDP大小
+  
+  # 参考模型配置（用于计算KL散度）
+  ref:
+    fsdp_config:
+      param_offload: False
+      wrap_policy:
+        min_num_params: 0
+    log_prob_micro_batch_size_per_gpu: 3  # 与actor保持一致
+    log_prob_use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
+    log_prob_max_token_len_per_gpu: ${actor_rollout_ref.actor.ppo_max_token_len_per_gpu}
+    ulysses_sequence_parallel_size: ${actor_rollout_ref.actor.ulysses_sequence_parallel_size}
+
+trainer:
+  balance_batch: True              # 启用批次平衡
+  resume_mode: auto               # 自动恢复训练
+  default_hdfs_dir: null
+  remove_previous_ckpt_in_save: False
+  del_local_ckpt_after_load: False  
+  val_before_train: False         # 训练前不验证
