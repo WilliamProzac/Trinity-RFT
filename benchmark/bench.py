@@ -61,7 +61,8 @@ def set_engine_num(config, args):
 
 
 def prepare_configs(args, rank, current_time):
-    base_path = os.path.dirname(os.path.abspath(__file__))
+    # 使用相对路径获取当前文件目录
+    base_path = os.path.dirname(__file__)
 
     current_time_str = time.strftime("%Y%m%d-%H%M%S", time.localtime(current_time))
     run_path = os.path.join(base_path, "runs", current_time_str)

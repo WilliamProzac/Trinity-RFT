@@ -9,7 +9,8 @@ class Eval:
         self.base_url = base_url or "http://localhost:8000/v1"
         self.model = model or "qwen3-4b"
         self.temperature = temperature
-        self.prompt_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "prompts")
+        # 使用相对路径，从当前文件向上两级，然后进入prompts目录
+        self.prompt_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "prompts")
         
     def _call_llm_api(self, content: str, max_retries: int = 10) -> str:
         client = OpenAI(

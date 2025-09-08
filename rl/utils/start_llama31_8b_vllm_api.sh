@@ -6,7 +6,7 @@
 set -e
 
 # 配置参数 - H800单卡专用部署（GPU 0，80GB显存）
-MODEL_PATH="/data/haoyang/workspace/cache/models/modelscope/hub/models/LLM-Research/Meta-Llama-3.1-8B-Instruct"
+MODEL_PATH="../../../cache/models/modelscope/hub/models/LLM-Research/Meta-Llama-3.1-8B-Instruct"
 HOST="localhost"
 PORT=8001  # 使用不同端口避免冲突
 TENSOR_PARALLEL_SIZE=1  # 单卡（GPU 0）

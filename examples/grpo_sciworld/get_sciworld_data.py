@@ -107,7 +107,8 @@ if __name__ == "__main__":
             f"JAR file not found at {jar_path}, please set the jar path mannually."
         )
 
-    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    # 使用相对路径获取当前文件目录
+    current_file_dir = os.path.dirname(__file__)
     output_dir = f"{current_file_dir}/sciworld_data"
     train_task_names = [
         "boil",

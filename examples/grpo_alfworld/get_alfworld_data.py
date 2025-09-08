@@ -17,8 +17,8 @@ def create_dataset_files(output_dir, train_size=1024, test_size=100):
     # get all matched game files
     game_files = glob.glob(os.path.expanduser(f"{ALFWORLD_DATA}/json_2.1.1/train/*/*/game.tw-pddl"))
 
-    # get absolute path
-    game_files = [os.path.abspath(file) for file in game_files]
+    # 保持相对路径或使用os.path.normpath处理
+    game_files = [os.path.normpath(file) for file in game_files]
     game_files = sorted(game_files)
 
     # randomly sellect the game files
@@ -60,6 +60,7 @@ def create_dataset_files(output_dir, train_size=1024, test_size=100):
 
 
 if __name__ == "__main__":
-    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    # 使用相对路径获取当前文件目录
+    current_file_dir = os.path.dirname(__file__)
     output_dir = f"{current_file_dir}/alfworld_data"
     create_dataset_files(output_dir, train_size=1024, test_size=100)

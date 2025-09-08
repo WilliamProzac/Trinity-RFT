@@ -1,6 +1,6 @@
 project: "mix_chord"
 name: "test_mix_chord"
-checkpoint_root_dir: rl/checkpoints
+checkpoint_root_dir: ../../autodl-tmp/checkpoints
 algorithm:
   algorithm_type: mix_chord
   repeat_times: 8 # or 16 for better performance in math related tasks
@@ -23,7 +23,7 @@ algorithm:
     train_batch_size_expert: 64
     train_batch_size_usual: 256 # 32 batchsize * 8 repeat times
 model:
-  model_path: /data/haoyang/workspace/cache/models/modelscope/hub/models/qwen/Qwen3-0.6B
+  model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-0.6B
   max_response_tokens: 10240
   max_model_len: 11264
 cluster:

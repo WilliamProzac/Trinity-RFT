@@ -271,6 +271,7 @@ def create_dataset_files(output_dir):
 
 
 if __name__ == "__main__":
-    current_file_path = os.path.dirname(os.path.abspath(__file__))
+    # 使用相对路径获取当前文件目录
+    current_file_path = os.path.dirname(__file__)
     output_dir = f"{current_file_path}/toolace_data"
     create_dataset_files(output_dir)

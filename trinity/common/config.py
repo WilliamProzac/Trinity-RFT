@@ -647,7 +647,8 @@ class Config:
             )
 
         # create buffer.cache_dir at <checkpoint_root_dir>/<project>/<name>/buffer
-        self.buffer.cache_dir = os.path.abspath(os.path.join(self.checkpoint_job_dir, "buffer"))
+        # 使用normpath代替abspath来处理路径
+        self.buffer.cache_dir = os.path.normpath(os.path.join(self.checkpoint_job_dir, "buffer"))
         try:
             os.makedirs(self.buffer.cache_dir, exist_ok=True)
         except Exception:

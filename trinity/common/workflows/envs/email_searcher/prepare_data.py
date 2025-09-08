@@ -12,7 +12,8 @@ from datasets import Dataset, Features, Sequence, Value, load_dataset
 from tqdm import tqdm
 
 # Resolve paths relative to this file so it works regardless of the current working directory
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# 使用相对路径获取当前文件目录
+BASE_DIR = os.path.dirname(__file__)
 # Database will live in "../data/enron_emails.db" relative to project root
 DEFAULT_DB_PATH = os.path.join(BASE_DIR, "..", "..", "data", "enron_emails.db")
 
