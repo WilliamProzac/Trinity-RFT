@@ -27,6 +27,20 @@ class Eval:
                 )
                 return completion.choices[0].message.content.strip("```").strip("json")
             except Exception as e:
+                # 检查是否是上下文长度错误
+                error_msg = str(e)
+                if "maximum context length" in error_msg or "tokens" in error_msg:
+                    print(f"\n🚨 上下文长度超限错误详情:")
+                    print(f"错误信息: {error_msg}")
+                    print(f"📏 Prompt长度: {len(content)} 字符")
+                    print(f"📝 完整Prompt内容:")
+                    print("=" * 80)
+                    print(content)
+                    print("=" * 80)
+                                               
+                    print(f"💡 建议: 考虑截断过长的内容或增加API模型的上下文长度")
+                    print()
+                
                 if attempt < max_retries:
                     wait_time = (2 ** attempt) + random.uniform(0, 1)
                     print(f"🔄 API重试 {attempt + 1}/{max_retries}, 等待{wait_time:.1f}s: {e}")

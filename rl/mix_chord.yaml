@@ -17,8 +17,8 @@ algorithm:
     clip_range: 0.2
     use_token_level_loss_in_sft: true
     use_dynamic_bsz: true
-    ppo_mini_batch_size: 320 # 320 = 256 + 64; if you set repeat times = 16, then it shoudle be 32 * 16 + 64
-    ppo_micro_batch_size_per_gpu: 4
+    ppo_mini_batch_size: 80  # 匹配新的训练批处理大小
+    ppo_micro_batch_size_per_gpu: 1  # 进一步减少到1以节省更多显存
     ngpus_trainer: 2  # 训练使用2张GPU卡，匹配ulysses_sequence_parallel_size
     train_batch_size_expert: 64
     train_batch_size_usual: 256 # 32 batchsize * 8 repeat times
@@ -31,8 +31,8 @@ cluster:
   gpu_per_node: 4  # 分配足够GPU：2张给explorer，2张给trainer
 buffer:
   total_epochs: 4
-  batch_size: 32
-  train_batch_size: 320
+  batch_size: 8   # 进一步减少批处理大小
+  train_batch_size: 80   # 进一步减少训练批处理大小
   explorer_input:
     taskset:
       name: rl_train
@@ -55,8 +55,7 @@ buffer:
           label_weight: 1.0
           content_weight: 1.0
     eval_tasksets: [] # you can add your own eval tasksets here
-    default_workflow_type: 'simple_workflow'  # 暂时使用标准workflow
-    default_reward_fn_type: 'all_reward_class'  # 使用自定义奖励函数类
+    default_workflow_type: 'custom_workflow'  # 使用自定义workflow（内置all_reward函数）
   trainer_input:
     experience_buffer:
       name: math_buffer

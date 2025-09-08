@@ -14,6 +14,28 @@ from .math_rm_workflow import MathRMWorkflow
 from .math_ruler_workflow import MathRULERWorkflow
 from .simple_mm_workflow import SimpleMMWorkflow
 from .workflow import WORKFLOWS, MathWorkflow, SimpleWorkflow, Task, Workflow
+# Import custom workflow from rl directory
+import sys
+from pathlib import Path
+rl_path = Path(__file__).parent.parent.parent.parent / "rl"
+if str(rl_path) not in sys.path:
+    sys.path.append(str(rl_path))
+try:
+    from custom_workflow import CustomWorkflow
+except ImportError as e:
+    print(f"Warning: Could not import CustomWorkflow: {e}")
+    CustomWorkflow = None
+except Exception as e:
+    # 捕获重复注册等其他错误
+    print(f"Warning: CustomWorkflow import/registration error: {e}")
+    try:
+        # 尝试直接获取已注册的workflow
+        from trinity.common.workflows.workflow import WORKFLOWS
+        CustomWorkflow = WORKFLOWS.get('custom_workflow')
+        if CustomWorkflow is not None:
+            print("✅ 成功获取已注册的CustomWorkflow")
+    except:
+        CustomWorkflow = None
 
 __all__ = [
     "Task",
@@ -21,6 +43,7 @@ __all__ = [
     "WORKFLOWS",
     "SimpleWorkflow",
     "MathWorkflow",
+    "CustomWorkflow",
     "WebShopWorkflow",
     "AlfworldWorkflow",
     "StepWiseAlfworldWorkflow",

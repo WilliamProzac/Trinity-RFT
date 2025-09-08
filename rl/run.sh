@@ -14,7 +14,7 @@ echo "=================================="
 cd /home/haoyang/workspace/Trinity-RFT
 
 # 设置使用GPU 0,1,2,3 (4张GPU卡)
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES=0,1
 echo "设置GPU: 使用4张GPU卡 (GPU 0,1,2,3)"
 
 # 第一步：检查并启动 Ray 集群

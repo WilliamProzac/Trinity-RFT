@@ -42,7 +42,7 @@ echo "  - ✅ 安全极速配置: 超快奖励评分 (不影响结果准确性)"
 echo ""
 
 # 使用GPU 0（专用于Llama3.1-8B API服务）
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=3
 
 # 启动vLLM服务器
 python -m vllm.entrypoints.openai.api_server \
