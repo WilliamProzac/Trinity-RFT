@@ -1,0 +1,7 @@
+Given the question and gold answer, please judge if the predicted answer is correct. Providing additional background or supplementary information is acceptable.
+
+Question: {question}
+Gold Answer: {gold_answer}
+Predicted Answer: {predicted_answer}
+
+Please only return 1 (means correct) or 0 (means incorrect) in a concise way.

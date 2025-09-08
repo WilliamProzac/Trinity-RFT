@@ -1,0 +1,7 @@
+Judge if the predicted query is similar in meaning to the reference query. Return only "1" for similar or "0" for different.
+
+Question: {question}
+Reference missing evidence: {gold_query}
+Predicted missing evidence: {predicted_query}
+
+Please only return 1 (if they are similar or close in meaning) or 0 (if they are different) in a concise way.

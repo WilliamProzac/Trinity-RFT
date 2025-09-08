@@ -1,0 +1,5 @@
+api:
+  key: "EMPTY"
+  base_url: "http://localhost:8001/v1"
+  model: "llama31-8b"
+  temperature: 0.6
