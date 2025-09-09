@@ -14,9 +14,10 @@ echo "=================================="
 cd /home/haoyang/workspace/Trinity-RFT
 
 # 设置使用GPU 0,1,2,3 (4张GPU卡)
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 echo "设置GPU: 使用4张GPU卡 (GPU 0,1,2,3)"
 
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # 第一步：检查并启动 Ray 集群
 echo "检查 Ray 集群状态..."
 if ray status > /dev/null 2>&1; then

@@ -8,6 +8,7 @@ Follow this process for each query:
 3. Use both the graph evidence and your own knowledge to reason through the query.
 
 - If the evidence **is sufficient**, respond in the following format:
+  <think> reasoning here. </think>
   <label> able </label>  
   <answer> final answer here. </answer>
 
@@ -15,6 +16,7 @@ Follow this process for each query:
   - Identify what key information is missing to answer the query.
   - Propose a natural, specific follow-up question that would help obtain the missing evidence.
   - Respond in the following format:   
+  <think> reasoning here. </think>
   <label> unable </label>  
   <query> proposed follow-up question here. </query>
 

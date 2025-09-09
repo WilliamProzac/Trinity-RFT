@@ -17,13 +17,13 @@ algorithm:
     clip_range: 0.2
     use_token_level_loss_in_sft: true
     use_dynamic_bsz: true
-    ppo_mini_batch_size: 4   # 32K上下文内存优化，进一步减少批处理大小
-    ppo_micro_batch_size_per_gpu: 1  # 保持最小微批处理大小
-    ngpus_trainer: 2  # 使用2张GPU卡进行训练，剩余2张给rollout模型
-    train_batch_size_expert: 64
-    train_batch_size_usual: 32  # 4 batchsize * 8 repeat times，因32K上下文减少批处理
+    ppo_mini_batch_size: 6   # 模型更小，可以增加批处理大小
+    ppo_micro_batch_size_per_gpu: 2  # 由于内存压力减轻，增加微批处理大小
+    ngpus_trainer: 3  # 使用3张GPU卡进行训练，缓解内存压力
+    train_batch_size_expert: 96  # 1.7B模型内存占用更小，可以增加批处理
+    train_batch_size_usual: 48   # 相应增加常规训练批处理大小
 model:
-  model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-0.6B
+  model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-1.7B
   max_response_tokens: 6144  # 支持更长的响应生成
   max_model_len: 32768        # 设置上下文长度为32K
 cluster:
@@ -31,8 +31,8 @@ cluster:
   gpu_per_node: 4  # 使用4张4090显卡
 buffer:
   total_epochs: 5
-  batch_size: 1   # 32K上下文内存优化，使用最小批处理大小
-  train_batch_size: 4    # 32K上下文内存优化，进一步减少批处理大小
+  batch_size: 6   # 1.7B模型可以处理更大批处理
+  train_batch_size: 6    # 相应增加训练批处理大小
   explorer_input:
     taskset:
       name: rl_train
@@ -75,13 +75,13 @@ explorer:
   runner_num: 32  # 因为有更多GPU资源，可以增加并发数
   rollout_model:
     engine_type: vllm_async  # 本地GPU推理
-    engine_num: 2  # 使用2个引擎用于rollout，留下2张GPU给训练器
+    engine_num: 1  # 使用1个引擎用于rollout，留下3张GPU给训练器
     tensor_parallel_size: 1  # 每个引擎1张GPU
     enable_prefix_caching: false
     enforce_eager: true
     dtype: bfloat16
     seed: 42
-    gpu_memory_utilization: 0.5   # 因为32K上下文需要更多内存，降低利用率
+    gpu_memory_utilization: 0.75   # 1.7B模型内存占用更小，可以提高利用率
 synchronizer:
   sync_method: 'nccl'
   sync_interval: 1
