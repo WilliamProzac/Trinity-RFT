@@ -3,7 +3,7 @@ name: "test_mix_chord"
 checkpoint_root_dir: ../autodl-tmp/checkpoints
 algorithm:
   algorithm_type: mix_chord
-  repeat_times: 12 # or 16 for better performance in math related tasks
+  repeat_times: 8  # 避免OOM，降回原值
   kl_loss_fn_args:
     kl_coef: 0.0
   sample_strategy_args:
@@ -17,11 +17,11 @@ algorithm:
     clip_range: 0.2
     use_token_level_loss_in_sft: true
     use_dynamic_bsz: true
-    ppo_mini_batch_size: 18   # micro_batch降到1后，进一步增加批处理大小
+    ppo_mini_batch_size: 12   # 平衡显存与训练效率
     ppo_micro_batch_size_per_gpu: 1  # 显存安全优先，对最终结果影响极小
     ngpus_trainer: 3  # 使用3张GPU卡进行训练，缓解内存压力
-    train_batch_size_expert: 216  # 相应增加专家数据批处理 (144->216)
-    train_batch_size_usual: 108   # 相应增加常规训练批处理大小 (72->108)
+    train_batch_size_expert: 144  # 专家数据批处理 (12×12)
+    train_batch_size_usual: 72    # 常规训练批处理 (12×6)
 model:
   model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-1.7B
   max_response_tokens: 8192  # 支持更长的响应生成
@@ -31,8 +31,8 @@ cluster:
   gpu_per_node: 4  # 使用4张4090显卡
 buffer:
   total_epochs: 5
-  batch_size: 18   # micro_batch降到1后，进一步增加探索批处理大小 (12->18)
-  train_batch_size: 18    # 相应增加训练批处理大小 (12->18)
+  batch_size: 12   # 平衡显存与训练效率的批处理大小
+  train_batch_size: 12    # 平衡显存与训练效率
   explorer_input:
     taskset:
       name: rl_train
@@ -73,7 +73,7 @@ buffer:
         prompt_type: messages
         messages_key: 'messages'
 explorer:
-  eval_interval: 50  # 每50步评估一次，平衡监控效果与训练效率
+  eval_interval: 100  # 每50步评估一次，平衡监控效果与训练效率
   runner_num: 8   # 1个engine_num对应8个runner即可
   rollout_model:
     engine_type: vllm_async  # 本地GPU推理
@@ -83,7 +83,7 @@ explorer:
     enforce_eager: true
     dtype: bfloat16
     seed: 42
-    gpu_memory_utilization: 0.75   # 1.7B模型内存占用更小，可以提高利用率
+    gpu_memory_utilization: 0.65   # 降低rollout模型显存使用，为训练留更多空间
     enable_thinking: true  # 启用Qwen3的thinking输出
 synchronizer:
   sync_method: 'nccl'
@@ -92,6 +92,6 @@ synchronizer:
 trainer:
   trainer_type: 'verl'
   trainer_config_path: 'examples/mix_chord/train_mix_chord.yaml'
-  save_interval: 355   # 每个epoch保存一次 (6399÷18≈355步/epoch)
+  save_interval: 533   # 每个epoch保存一次 (6399÷12≈533步/epoch)
 monitor:
   monitor_type: tensorboard  # 使用TensorBoard监控

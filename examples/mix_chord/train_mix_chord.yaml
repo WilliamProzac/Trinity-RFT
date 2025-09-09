@@ -4,8 +4,8 @@ actor_rollout_ref:
     external_lib: null
     override_config: 
       # LoRA配置 - 4B模型使用更大的LoRA参数以提高表达能力
-      lora_rank: 64       # 4B模型推荐使用128秩，提高模型适应能力
-      lora_alpha: 128      # alpha设置为rank的2倍，保持标准比例
+      lora_rank: 32       # 降低LoRA秩，显著减少参数量和显存占用
+      lora_alpha: 64      # alpha设置为rank的2倍，保持标准比例
       target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]  # Qwen模型的目标模块
     enable_gradient_checkpointing: True
     use_remove_padding: True  # False
@@ -28,12 +28,12 @@ actor_rollout_ref:
       wrap_policy:
         # transformer_layer_cls_to_wrap: None
         min_num_params: 0
-      param_offload: False   # 1.7B模型内存占用小，可以关闭参数卸载提高性能
-      optimizer_offload: False  # 关闭优化器卸载，提高训练速度
+      param_offload: True    # 启用参数卸载，节省显存（会略微影响速度）
+      optimizer_offload: True   # 启用优化器卸载，进一步节省显存
       fsdp_size: -1
   ref:
     fsdp_config:
-      param_offload: False   # 1.7B模型可以关闭ref模型参数卸载
+      param_offload: True    # 启用参考模型参数卸载，节省显存
       wrap_policy:
         # transformer_layer_cls_to_wrap: None
         min_num_params: 0
