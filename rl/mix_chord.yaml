@@ -82,6 +82,7 @@ explorer:
     dtype: bfloat16
     seed: 42
     gpu_memory_utilization: 0.75   # 1.7B模型内存占用更小，可以提高利用率
+    enable_thinking: true  # 启用Qwen3的thinking输出
 synchronizer:
   sync_method: 'nccl'
   sync_interval: 1

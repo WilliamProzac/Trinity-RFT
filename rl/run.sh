@@ -33,6 +33,11 @@ if [[ -n "${WANDB_API_KEY}" ]]; then
     wandb login
 fi
 
+# 清理旧的训练数据（如果存在的话）
+echo "清理旧数据..."
+rm -r test_mix_chord.db 2>/dev/null || echo "  - test_mix_chord.db 不存在，跳过"
+rm -r ../autodl-tmp 2>/dev/null || echo "  - autodl-tmp 不存在，跳过"
+
 # 第三步：运行 CHORD 训练
 echo "开始运行 CHORD 算法训练..."
 echo "配置文件: rl/mix_chord.yaml"
