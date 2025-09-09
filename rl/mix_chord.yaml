@@ -3,36 +3,36 @@ name: "test_mix_chord"
 checkpoint_root_dir: ../autodl-tmp/checkpoints
 algorithm:
   algorithm_type: mix_chord
-  repeat_times: 8 # or 16 for better performance in math related tasks
+  repeat_times: 12 # or 16 for better performance in math related tasks
   kl_loss_fn_args:
     kl_coef: 0.0
   sample_strategy_args:
     expert_data_ratio: 0.20
   policy_loss_fn_args: # feel free to change, we encourage you to try out different hyperparameters
-    mu_warmup_steps: 200  # 0 for chord-mu and chord-phi
-    mu_decay_steps: 400 # 200 for chord-mu and 0 for chord-phi
+    mu_warmup_steps: 120  # 预热期：120步 (占总步数6.8%)
+    mu_decay_steps: 235   # 衰减期：235步 (占总步数13.2%)
     mu_peak: 0.5 # 0.9 for chord-mu and 0.1 for chord-phi
     mu_valley: 0.02 # 0.05 for chord-mu and 0.1 for chord-phi
     enable_phi_function: true # false for chord-mu and true for chord-phi
     clip_range: 0.2
     use_token_level_loss_in_sft: true
     use_dynamic_bsz: true
-    ppo_mini_batch_size: 6   # 模型更小，可以增加批处理大小
-    ppo_micro_batch_size_per_gpu: 2  # 由于内存压力减轻，增加微批处理大小
+    ppo_mini_batch_size: 18   # micro_batch降到1后，进一步增加批处理大小
+    ppo_micro_batch_size_per_gpu: 1  # 显存安全优先，对最终结果影响极小
     ngpus_trainer: 3  # 使用3张GPU卡进行训练，缓解内存压力
-    train_batch_size_expert: 96  # 1.7B模型内存占用更小，可以增加批处理
-    train_batch_size_usual: 48   # 相应增加常规训练批处理大小
+    train_batch_size_expert: 216  # 相应增加专家数据批处理 (144->216)
+    train_batch_size_usual: 108   # 相应增加常规训练批处理大小 (72->108)
 model:
   model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-1.7B
-  max_response_tokens: 6144  # 支持更长的响应生成
+  max_response_tokens: 8192  # 支持更长的响应生成
   max_model_len: 32768        # 设置上下文长度为32K
 cluster:
   node_num: 1
   gpu_per_node: 4  # 使用4张4090显卡
 buffer:
   total_epochs: 5
-  batch_size: 6   # 1.7B模型可以处理更大批处理
-  train_batch_size: 6    # 相应增加训练批处理大小
+  batch_size: 18   # micro_batch降到1后，进一步增加探索批处理大小 (12->18)
+  train_batch_size: 18    # 相应增加训练批处理大小 (12->18)
   explorer_input:
     taskset:
       name: rl_train
@@ -42,19 +42,21 @@ buffer:
         prompt_key: 'prompt'
         response_key: 'answer'
       rollout_args:
-        temperature: 1.0
+        temperature: 0.6
         logprobs: 0
       workflow_args:
         with_think: true
-        format_score_coef: 0.1  # 格式奖励系数
       reward_fn_args:
         # all_reward 函数的参数
         enable_logging: true
-        reward_components:
-          format_weight: 1.0
-          label_weight: 1.0
-          content_weight: 1.0
-    eval_tasksets: [] # you can add your own eval tasksets here
+    eval_tasksets:
+    - name: test_eval
+      storage_type: file
+      path: rl/datasets/test
+      split: 'test'  # 指定使用test分片
+      format:
+        prompt_key: 'prompt'
+        response_key: 'answer'
     default_workflow_type: 'custom_workflow'  # 使用自定义workflow（内置all_reward函数）
   trainer_input:
     experience_buffer:
@@ -62,7 +64,7 @@ buffer:
       storage_type: queue
       path: 'sqlite:///test_mix_chord.db'
     sft_warmup_dataset:
-      total_epochs: 25
+      total_epochs: 50
       name: sft_train
       storage_type: file
       path: rl/datasets/sft_train
@@ -71,8 +73,8 @@ buffer:
         prompt_type: messages
         messages_key: 'messages'
 explorer:
-  eval_interval: 10
-  runner_num: 32  # 因为有更多GPU资源，可以增加并发数
+  eval_interval: 50  # 每50步评估一次，平衡监控效果与训练效率
+  runner_num: 8   # 1个engine_num对应8个runner即可
   rollout_model:
     engine_type: vllm_async  # 本地GPU推理
     engine_num: 1  # 使用1个引擎用于rollout，留下3张GPU给训练器
@@ -90,6 +92,6 @@ synchronizer:
 trainer:
   trainer_type: 'verl'
   trainer_config_path: 'examples/mix_chord/train_mix_chord.yaml'
-  save_interval: 3200  # 每个epoch保存一次 (6399÷2≈3200步/epoch)
+  save_interval: 355   # 每个epoch保存一次 (6399÷18≈355步/epoch)
 monitor:
   monitor_type: tensorboard  # 使用TensorBoard监控
