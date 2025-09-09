@@ -31,9 +31,9 @@ def load_config(config_path: str = None):
 
 def setup_loggers():
     """设置两个独立的日志记录器"""
-    # 创建logs目录 - 相对于当前文件所在目录
+    # 创建logs目录 - 使用autodl-tmp目录
     current_dir = Path(__file__).parent
-    logs_dir = current_dir / "outputs" / "logs"
+    logs_dir = current_dir / ".." / ".." / "autodl-tmp" / "outputs" / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     
     # 生成带时间戳的日志文件名
