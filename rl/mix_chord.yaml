@@ -94,4 +94,4 @@ trainer:
   trainer_config_path: 'examples/mix_chord/train_mix_chord.yaml'
   save_interval: 533   # 每个epoch保存一次 (6399÷12≈533步/epoch)
 monitor:
-  monitor_type: tensorboard  # 使用TensorBoard监控
+  monitor_type: tensorboard  # 使用TensorBoard
