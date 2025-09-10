@@ -5,7 +5,7 @@
 #   temperature: 0.6
 
 api:
-  key: "sk-TnVKM2Xl8y2nVFglJlXDDbNnfE7b5CxOYtPCnkVM5Q8PEk1u"
-  base_url: "https://api2.aigcbest.top/v1"  # 修复：移除端点路径，只保留基础URL
-  model: "DeepSeek-V3"
+  key: "EMPTY"
+  base_url: "http://localhost:8001/v1"  # 使用本地llama3.1-8b API（0号卡）
+  model: "llama31-8b"
   temperature: 0.6

@@ -17,22 +17,22 @@ algorithm:
     clip_range: 0.2
     use_token_level_loss_in_sft: true
     use_dynamic_bsz: true
-    ppo_mini_batch_size: 12   # 平衡显存与训练效率
+    ppo_mini_batch_size: 6    # 降低批处理大小，节省显存
     ppo_micro_batch_size_per_gpu: 1  # 显存安全优先，对最终结果影响极小
-    ngpus_trainer: 3  # 使用3张GPU卡进行训练，缓解内存压力
-    train_batch_size_expert: 144  # 专家数据批处理 (12×12)
-    train_batch_size_usual: 72    # 常规训练批处理 (12×6)
+    ngpus_trainer: 2  # 使用2张GPU卡进行训练（2-3号卡）
+    train_batch_size_expert: 72   # 专家数据批处理 (6×12)
+    train_batch_size_usual: 36    # 常规训练批处理 (6×6)
 model:
   model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-1.7B
-  max_response_tokens: 8192  # 支持更长的响应生成
-  max_model_len: 32768        # 设置上下文长度为32K
+  max_response_tokens: 6144  # 降低响应长度，节省显存
+  max_model_len: 20000       # 平衡训练与部署，支持长文本外推
 cluster:
   node_num: 1
-  gpu_per_node: 4  # 使用4张4090显卡
+  gpu_per_node: 3  # Trinity训练使用3张GPU（1号rollout + 2-3号训练）
 buffer:
   total_epochs: 5
-  batch_size: 12   # 平衡显存与训练效率的批处理大小
-  train_batch_size: 12    # 平衡显存与训练效率
+  batch_size: 6    # 降低批处理大小，节省显存
+  train_batch_size: 6     # 降低批处理大小，节省显存
   explorer_input:
     taskset:
       name: rl_train
@@ -49,14 +49,15 @@ buffer:
       reward_fn_args:
         # all_reward 函数的参数
         enable_logging: true
-    eval_tasksets:
-    - name: test_eval
-      storage_type: file
-      path: rl/datasets/test
-      split: 'test'  # 指定使用test分片
-      format:
-        prompt_key: 'prompt'
-        response_key: 'answer'
+    # eval_tasksets:
+    # - name: test_eval
+    #   storage_type: file
+    #   path: rl/datasets/test
+    #   split: 'test'  # 指定使用test分片
+    #   format:
+    #     prompt_key: 'prompt'
+    #     response_key: 'answer'
+    eval_tasksets: []  # 禁用所有评估任务，节省显存
     default_workflow_type: 'custom_workflow'  # 使用自定义workflow（内置all_reward函数）
   trainer_input:
     experience_buffer:
@@ -73,11 +74,11 @@ buffer:
         prompt_type: messages
         messages_key: 'messages'
 explorer:
-  eval_interval: 100  # 每50步评估一次，平衡监控效果与训练效率
+  eval_interval: 999999  # 禁用评估，节省显存和计算资源
   runner_num: 8   # 1个engine_num对应8个runner即可
   rollout_model:
     engine_type: vllm_async  # 本地GPU推理
-    engine_num: 1  # 使用1个引擎用于rollout，留下3张GPU给训练器
+    engine_num: 1  # 使用1个引擎用于rollout（1号卡），留下2张GPU给训练器
     tensor_parallel_size: 1  # 每个引擎1张GPU
     enable_prefix_caching: false
     enforce_eager: true
@@ -88,10 +89,10 @@ explorer:
 synchronizer:
   sync_method: 'nccl'
   sync_interval: 1
-  sync_timeout: 1200
+  sync_timeout: 36000  # 增加到1小时，避免初始评估超时
 trainer:
   trainer_type: 'verl'
   trainer_config_path: 'examples/mix_chord/train_mix_chord.yaml'
-  save_interval: 533   # 每个epoch保存一次 (6399÷12≈533步/epoch)
+  save_interval: 1066  # 每个epoch保存一次 (6399÷6≈1066步/epoch)
 monitor:
   monitor_type: tensorboard  # 使用TensorBoard

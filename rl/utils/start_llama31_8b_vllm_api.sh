@@ -10,7 +10,7 @@ MODEL_PATH="/data/haoyang/workspace/cache/models/modelscope/hub/models/LLM-Resea
 HOST="localhost"
 PORT=8001  # 使用不同端口避免冲突
 TENSOR_PARALLEL_SIZE=1  # 单卡（GPU 0）
-GPU_MEMORY_UTILIZATION=0.8  # H800 80GB显存高利用率  
+GPU_MEMORY_UTILIZATION=0.95  # H800 80GB显存高利用率  
 MAX_MODEL_LEN=2048   # 二元输出极速优化：短输入+极短输出
 
 # 确保模型路径存在
@@ -54,9 +54,9 @@ python -m vllm.entrypoints.openai.api_server \
     --max-model-len "$MAX_MODEL_LEN" \
     --served-model-name "llama31-8b" \
     --trust-remote-code \
-    --max-num-batched-tokens 512 \
-    --max-num-seqs 8 \
-    --block-size 16 \
+    --max-num-batched-tokens 4096 \
+    --max-num-seqs 32 \
+    --block-size 32 \
     --enable-chunked-prefill \
     --enable-prefix-caching \
     --disable-custom-all-reduce \
