@@ -13,9 +13,9 @@ echo "=================================="
 # 进入项目根目录
 cd /home/haoyang/workspace/Trinity-RFT
 
-# GPU分配: 0号Llama API, 1号rollout, 2-3号训练
-export CUDA_VISIBLE_DEVICES=1,2,3
-echo "设置GPU: 使用3张GPU卡 (GPU 1:rollout, 2-3:训练)"
+# GPU分配: 0号rollout, 1-2号训练, 3号Llama3-70B API
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+echo "设置GPU: 使用4张L20 48GB (GPU 0:rollout, 1-2:训练, 3:Llama3-70B API)"
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # 第一步：检查并启动 Ray 集群

@@ -3,36 +3,36 @@ name: "test_mix_chord"
 checkpoint_root_dir: ../autodl-tmp/checkpoints
 algorithm:
   algorithm_type: mix_chord
-  repeat_times: 8  # 避免OOM，降回原值
+  repeat_times: 12  # 增加GRPO组内竞争样本，提高训练质量
   kl_loss_fn_args:
     kl_coef: 0.0
   sample_strategy_args:
     expert_data_ratio: 0.20
   policy_loss_fn_args: # feel free to change, we encourage you to try out different hyperparameters
-    mu_warmup_steps: 120  # 预热期：120步 (占总步数6.8%)
-    mu_decay_steps: 235   # 衰减期：235步 (占总步数13.2%)
+    mu_warmup_steps: 300  # 预热期：120步 (占总步数6.8%)
+    mu_decay_steps: 500   # 衰减期：235步 (占总步数13.2%)
     mu_peak: 0.5 # 0.9 for chord-mu and 0.1 for chord-phi
     mu_valley: 0.02 # 0.05 for chord-mu and 0.1 for chord-phi
     enable_phi_function: true # false for chord-mu and true for chord-phi
     clip_range: 0.2
     use_token_level_loss_in_sft: true
     use_dynamic_bsz: true
-    ppo_mini_batch_size: 6    # 降低批处理大小，节省显存
+    ppo_mini_batch_size: 8    # 适当增大，提升训练效率
     ppo_micro_batch_size_per_gpu: 1  # 显存安全优先，对最终结果影响极小
-    ngpus_trainer: 2  # 使用2张GPU卡进行训练（2-3号卡）
-    train_batch_size_expert: 72   # 专家数据批处理 (6×12)
-    train_batch_size_usual: 36    # 常规训练批处理 (6×6)
+    ngpus_trainer: 2  # 使用2张GPU卡进行训练（1-2号卡）
+    train_batch_size_expert: 96   # 专家数据批处理 (8×12)
+    train_batch_size_usual: 96    # 常规训练批处理 (8×12)
 model:
   model_path: ../cache/models/modelscope/hub/models/qwen/Qwen3-1.7B
-  max_response_tokens: 6144  # 降低响应长度，节省显存
-  max_model_len: 20000       # 平衡训练与部署，支持长文本外推
+  max_response_tokens: 8192  # 32K上下文，响应长度8K
+  max_model_len: 32768       # 恢复32K上下文长度，充分利用模型能力
 cluster:
   node_num: 1
-  gpu_per_node: 3  # Trinity训练使用3张GPU（1号rollout + 2-3号训练）
+  gpu_per_node: 4  # Trinity训练使用4张L20 48GB（0号rollout + 1-2号训练 + 3号Llama3-70B API）
 buffer:
   total_epochs: 5
-  batch_size: 6    # 降低批处理大小，节省显存
-  train_batch_size: 6     # 降低批处理大小，节省显存
+  batch_size: 8    # 适当增大，充分利用48GB双卡资源
+  train_batch_size: 8     # 与batch_size保持一致
   explorer_input:
     taskset:
       name: rl_train
@@ -78,13 +78,13 @@ explorer:
   runner_num: 8   # 1个engine_num对应8个runner即可
   rollout_model:
     engine_type: vllm_async  # 本地GPU推理
-    engine_num: 1  # 使用1个引擎用于rollout（1号卡），留下2张GPU给训练器
+    engine_num: 1  # 使用1个引擎用于rollout（0号卡独占）
     tensor_parallel_size: 1  # 每个引擎1张GPU
     enable_prefix_caching: false
     enforce_eager: true
     dtype: bfloat16
     seed: 42
-    gpu_memory_utilization: 0.65   # 降低rollout模型显存使用，为训练留更多空间
+    gpu_memory_utilization: 0.75   # 0号卡独占rollout，可以使用更多显存
     enable_thinking: true  # 启用Qwen3的thinking输出
 synchronizer:
   sync_method: 'nccl'
@@ -93,6 +93,6 @@ synchronizer:
 trainer:
   trainer_type: 'verl'
   trainer_config_path: 'examples/mix_chord/train_mix_chord.yaml'
-  save_interval: 1066  # 每个epoch保存一次 (6399÷6≈1066步/epoch)
+  save_interval: 800   # 每个epoch保存一次 (6399÷8≈800步/epoch)
 monitor:
   monitor_type: tensorboard  # 使用TensorBoard

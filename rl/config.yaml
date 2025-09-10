@@ -6,6 +6,6 @@
 
 api:
   key: "EMPTY"
-  base_url: "http://localhost:8001/v1"  # 使用本地llama3.1-8b API（0号卡）
-  model: "llama31-8b"
+  base_url: "http://localhost:8001/v1"  # 使用本地llama3.3-70b API（3号卡）
+  model: "llama33-70b"
   temperature: 0.6

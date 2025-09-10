@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-GraphRAG模型下载脚本
-- 下载模型 (all-MiniLM-L6-v2, Qwen3-4B, Qwen3-32B)
+Trinity-RFT模型下载脚本
+- 下载模型 (all-MiniLM-L6-v2, Qwen3系列, Llama3.3-70B)
 """
 
 from modelscope import snapshot_download
@@ -33,16 +33,18 @@ def download_model(model_id, local_dir, model_name):
 
 def main():
     """主函数"""
-    print("🚀 GraphRAG模型下载")
+    print("🚀 Trinity-RFT模型下载")
     
     # 模型配置
     models = [
         ("AI-ModelScope/all-MiniLM-L6-v2", "../cache/models/modelscope/hub/models/AI-ModelScope/all-MiniLM-L6-v2", "嵌入模型"),
         # ("Qwen/Qwen3-8B", "../cache/models/modelscope/hub/models/qwen/Qwen3-8B", "Qwen3-8B"),
-        ("Qwen/Qwen3-4B", "../cache/models/modelscope/hub/models/qwen/Qwen3-4B", "Qwen3-4B"),
+        # ("Qwen/Qwen3-4B", "../cache/models/modelscope/hub/models/qwen/Qwen3-4B", "Qwen3-4B"),
         # ("Qwen/Qwen3-32B", "../cache/models/modelscope/hub/models/qwen/Qwen3-32B", "Qwen3-32B")
         ("Qwen/Qwen3-1.7B", "../cache/models/modelscope/hub/models/qwen/Qwen3-1.7B", "Qwen3-1.7B"),
-        ("Qwen/Qwen3-0.6B", "../cache/models/modelscope/hub/models/qwen/Qwen3-0.6B", "Qwen3-0.6B")        
+        # ("Qwen/Qwen3-0.6B", "../cache/models/modelscope/hub/models/qwen/Qwen3-0.6B", "Qwen3-0.6B"),
+        # Llama模型用于奖励计算
+        ("LLM-Research/Llama-3.3-70B-Instruct", "../cache/models/modelscope/hub/models/LLM-Research/Llama-3.3-70B-Instruct", "Llama-3.3-70B-Instruct (奖励模型)")
     ]
     
     success_count = 0
